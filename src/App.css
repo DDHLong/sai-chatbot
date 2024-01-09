@@ -1,0 +1,16 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+li {
+  text-align: left;
+}
+
+input {
+  padding: 10px;
+  width: 600px;
+  border-radius: 8px;
+}
