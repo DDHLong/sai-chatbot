@@ -5,9 +5,7 @@ import {
   MessagesPlaceholder,
 } from "@langchain/core/prompts";
 import { z } from "zod";
-import {
-  DynamicStructuredTool,
-} from "@langchain/community/tools/dynamic";
+import { DynamicStructuredTool } from "@langchain/community/tools/dynamic";
 import { chain } from "./chain";
 
 const llm = new ChatOpenAI({
@@ -18,7 +16,8 @@ const llm = new ChatOpenAI({
 const tools = [
   new DynamicStructuredTool({
     name: "documents-search",
-    description: "Query related infomation about Scrimba",
+    description:
+      "Query related infomation about the product and its relevant data",
     schema: z.object({
       question: z.string().describe("input of user"),
     }),
@@ -26,7 +25,7 @@ const tools = [
   }),
   new DynamicStructuredTool({
     name: "order",
-    description: `call this to seal a deal with the user. input should be similar to "I want to order X".`,
+    description: `call this if customer have the intent to buy the items. input should be similar to "I want to order X" or "I want to buy X".`,
     schema: z.object({
       item: z.string().describe("The item user want to order"),
     }),
@@ -45,7 +44,7 @@ const tools = [
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
-    `You are a helpful and enthusiastic support that must answer using at least one provided tools. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always give answer in Vietnamese`,
+    `You are a helpful and enthusiastic saleman who must answer using at least one provided tools. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always give answer in Vietnamese`,
   ],
   ["human", "{input}"],
   new MessagesPlaceholder("agent_scratchpad"),
