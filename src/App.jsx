@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./App.css";
-import { chain } from "./utils/chain";
+import { agentExecutor } from "./utils/agentExecutor";
+// import { chain } from "./utils/chain";
 
 function App() {
   const [input, setInput] = useState("");
@@ -11,24 +12,34 @@ function App() {
 
   const onSubmit = async () => {
     if (input.trim() !== "") {
+      setInput(""); // Clear the input field after adding the message
       setMessages((prevMessages) => [
         ...prevMessages,
         { name: "human", mess: input },
       ]);
 
-      setInput(""); // Clear the input field after adding the message
-
-      chain
-        .invoke({ question: input, language: "vietnamese" })
+      //   chain
+      //     .invoke({ question: input})
+      //     .then((response) => {
+      //       setMessages((prevMessages) => [
+      //         ...prevMessages,
+      //         { name: "AI", mess: response },
+      //       ]);
+      //     });
+      // }
+      agentExecutor
+        .invoke({
+          input: input,
+        })
         .then((response) => {
+          console.log(response);
           setMessages((prevMessages) => [
             ...prevMessages,
-            { name: "AI", mess: response },
+            { name: "AI", mess: response.output },
           ]);
         });
     }
   };
-  console.log(messages);
 
   return (
     <>
@@ -39,6 +50,7 @@ function App() {
           id="user-input"
           required
           onChange={onChange}
+          value={input}
         />
         <button onClick={onSubmit}>Enter</button>
       </div>

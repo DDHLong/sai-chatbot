@@ -8,11 +8,6 @@ import {
   RunnableSequence,
 } from "@langchain/core/runnables";
 
-document.addEventListener("submit", (e) => {
-  e.preventDefault();
-  progressConversation();
-});
-
 const llm = new ChatOpenAI();
 
 const standaloneQuestionTemplate =
@@ -22,19 +17,13 @@ const standaloneQuestionPrompt = PromptTemplate.fromTemplate(
   standaloneQuestionTemplate
 );
 
-const answerTemplate = `You are a helpful and enthusiastic support bot who can answer a given question about Scrimba based on the context provided. Try to find the answer in the context. If you really don't know the answer, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@scrimba.com. Don't try to make up an answer. Always speak as if you were chatting to a friend. Always give answer in Vietnamese
+const answerTemplate = `You are a helpful and enthusiastic support bot who can answer a given question about Scrimba based on the context provided. Try to find the answer in the context. If you really don't know the answer, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Don't try to make up an answer. Always speak as if you were chatting to a friend. Always give answer in Vietnamese
 context: {context}
 question: {question}
 answer:
 `;
 
 const answerPrompt = PromptTemplate.fromTemplate(answerTemplate);
-
-const translationTemplate = `Given a sentence, translate that sentence into {language}
-    sentence: {grammatically_correct_sentence}
-    translated sentence:
-    `;
-const translationPrompt = PromptTemplate.fromTemplate(translationTemplate);
 
 const standaloneQuestionChain = standaloneQuestionPrompt
   .pipe(llm)
@@ -46,11 +35,6 @@ const retrieverChain = RunnableSequence.from([
   combineDocuments,
 ]);
 const answerChain = answerPrompt.pipe(llm).pipe(new StringOutputParser());
-const translationChain = RunnableSequence.from([
-  translationPrompt,
-  llm,
-  new StringOutputParser(),
-]);
 
 export const chain = RunnableSequence.from([
   {
@@ -62,5 +46,4 @@ export const chain = RunnableSequence.from([
     question: ({ original_input }) => original_input.question,
   },
   answerChain,
-  //   translationChain,
 ]);
