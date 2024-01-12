@@ -8,6 +8,19 @@ import { z } from "zod";
 import { DynamicStructuredTool } from "@langchain/community/tools/dynamic";
 import { chain } from "./chain";
 
+const mockApiCall = (item) => {
+  return new Promise((resolve) => {
+    // Simulate API call with a delay of 1.5 seconds
+    setTimeout(() => {
+      const mockData = {
+        name: "PriceAPI",
+        content: { name: item, price: 20000, currency: "VND" },
+      };
+      resolve(mockData);
+    }, 1000);
+  });
+};
+
 const llm = new ChatOpenAI({
   modelName: "gpt-3.5-turbo",
   temperature: 0,
@@ -37,7 +50,12 @@ const tools = [
     schema: z.object({
       item: z.string().describe("The item user want to know the price"),
     }),
-    func: async ({ item }) => `${item} price is 20$`,
+    func: async ({ item }) => {
+      const res = await mockApiCall(item);
+      return JSON.stringify({
+        result: res,
+      });
+    },
   }),
 ];
 
@@ -59,4 +77,5 @@ const agent = await createOpenAIFunctionsAgent({
 export const agentExecutor = new AgentExecutor({
   agent,
   tools,
+  verbose: true,
 });
