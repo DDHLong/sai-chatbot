@@ -80,6 +80,13 @@ const mockApiCall = (item) => {
 const llm = new ChatOpenAI({
   modelName: "gpt-3.5-turbo",
   temperature: 0,
+  callbacks: [
+    {
+      handleLLMEnd(output) {
+        console.log(JSON.stringify(output, null, 2));
+      },
+    },
+  ],
 });
 
 const tools = [
