@@ -32,7 +32,6 @@ function App() {
           input: input,
         })
         .then((response) => {
-          console.log(response);
           setMessages((prevMessages) => [
             ...prevMessages,
             { name: "AI", mess: response.output },

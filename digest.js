@@ -21,6 +21,7 @@ try {
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 500,
     chunkOverlap: 50,
+    separators: "\n",
   });
 
   const output = await splitter.splitDocuments(rawDocs);
