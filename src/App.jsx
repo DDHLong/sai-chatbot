@@ -2,10 +2,12 @@ import { useState } from "react";
 import "./App.css";
 import { agentExecutor } from "./utils/agentExecutor";
 // import { chain } from "./utils/chain";
+import { AIMessage, BaseMessage, HumanMessage } from "@langchain/core/messages";
 
 function App() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
   const onChange = (e) => {
     setInput(e.target.value);
   };
@@ -16,6 +18,10 @@ function App() {
       setMessages((prevMessages) => [
         ...prevMessages,
         { name: "human", mess: input },
+      ]);
+      setChatHistory((prevMessages) => [
+        ...prevMessages,
+        new HumanMessage(input),
       ]);
 
       //   chain
@@ -30,11 +36,16 @@ function App() {
       agentExecutor
         .invoke({
           input: input,
+          chat_history: chatHistory,
         })
         .then((response) => {
           setMessages((prevMessages) => [
             ...prevMessages,
             { name: "AI", mess: response.output },
+          ]);
+          setChatHistory((prevMessages) => [
+            ...prevMessages,
+            new AIMessage(response.output),
           ]);
         });
     }

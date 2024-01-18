@@ -7,6 +7,10 @@ import {
 import { z } from "zod";
 import { DynamicStructuredTool } from "@langchain/community/tools/dynamic";
 import { chain } from "./chain";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { formatToOpenAIFunctionMessages } from "langchain/agents/format_scratchpad";
+import { OpenAIFunctionsAgentOutputParser } from "langchain/agents/openai/output_parser";
+import { convertToOpenAIFunction } from "@langchain/core/utils/function_calling";
 
 const clothingArray = [
   "T-shirt",
@@ -53,7 +57,6 @@ const clothingItems = [
 
 const mockApiCallItemStatus = (item) => {
   const itemStatus = clothingItems.filter((i) => i.type === item);
-  console.log(">>>", item, itemStatus);
   return new Promise((resolve) => {
     setTimeout(() => {
       const mockData = {
@@ -125,7 +128,7 @@ const tools = [
       `I have confirm you want to buy ${item}.Please provide us the quantity you want to buy,your phone number, address in this format: "quantity - your phone number - address" `,
   }),
   new DynamicStructuredTool({
-    name: "order-confirm",
+    name: "order-detail-confirm",
     description: `call this if customer type in their address and phone in this format "quantity - phone number - address"`,
     schema: z.object({
       quantity: z.number().describe("Quantity of item they want to buy"),
@@ -150,23 +153,47 @@ const tools = [
   }),
 ];
 
+const MEMORY_KEY = "chat_history";
+
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
     `You are a helpful and enthusiastic saleman who must answer using at least one provided tools.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always give answer in Vietnamese`,
   ],
+  new MessagesPlaceholder(MEMORY_KEY),
   ["human", "{input}"],
   new MessagesPlaceholder("agent_scratchpad"),
 ]);
 
-const agent = await createOpenAIFunctionsAgent({
-  llm,
-  tools,
-  prompt,
+const modelWithFunctions = llm.bind({
+  functions: tools.map((tool) => convertToOpenAIFunction(tool)),
 });
 
-export const agentExecutor = new AgentExecutor({
-  agent,
+const agentWithMemory = RunnableSequence.from([
+  {
+    input: (i) => i.input,
+    agent_scratchpad: (i) => formatToOpenAIFunctionMessages(i.steps),
+    chat_history: (i) => i.chat_history,
+  },
+  prompt,
+  modelWithFunctions,
+  new OpenAIFunctionsAgentOutputParser(),
+]);
+
+// const agent = await createOpenAIFunctionsAgent({
+//   llm,
+//   tools,
+//   prompt,
+// });
+
+// export const agentExecutor = new AgentExecutor({
+//   agent,
+//   tools,
+//   verbose: true,
+// });
+
+export const agentExecutor = AgentExecutor.fromAgentAndTools({
+  agent: agentWithMemory,
   tools,
   verbose: true,
 });
