@@ -11,6 +11,7 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { formatToOpenAIFunctionMessages } from "langchain/agents/format_scratchpad";
 import { OpenAIFunctionsAgentOutputParser } from "langchain/agents/openai/output_parser";
 import { convertToOpenAIFunction } from "@langchain/core/utils/function_calling";
+import { checkNoNullFieldsOrEmptyStrings } from "./ultils";
 
 const clothingArray = [
   "T-shirt",
@@ -68,6 +69,8 @@ const mockApiCallItemStatus = (item) => {
   });
 };
 
+let orderDetail = { quantity: null, phone: null, name: null, address: null };
+
 const mockApiCall = (item) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -120,27 +123,67 @@ const tools = [
   }),
   new DynamicStructuredTool({
     name: "order",
-    description: `call this if customer have the intent to buy the items. input should be similar to "I want to order X" or "I want to buy X".`,
+    description: `call this if customer have the intent to buy or order the items. input should be similar to "I want to order X" or "I want to buy X".`,
     schema: z.object({
       item: z.string().describe("The item user want to order"),
     }),
     func: async ({ item }) =>
-      `I have confirm you want to buy ${item}.Please provide us the quantity you want to buy,your phone number, address in this format: "quantity - your phone number - address" `,
+      `I have confirm you want to buy ${item}. How many you want to buy?" `,
   }),
   new DynamicStructuredTool({
-    name: "order-detail-confirm",
-    description: `call this if customer type in their address and phone in this format "quantity - phone number - address"`,
+    name: "quantity",
+    description: `call this if answer the question of how many do the customer want to buy.`,
     schema: z.object({
-      quantity: z.number().describe("Quantity of item they want to buy"),
-      phone: z.string().describe("Phone number of the customer"),
-      address: z.string().describe("Address of the customer"),
+      quantity: z.number().describe("The number of items user want to order"),
     }),
-    func: async ({ phone, address }) =>
-      `we will deliver to ${address}. Thank you for the order`,
+    func: async ({ quantity }) => {
+      orderDetail.quantity = quantity;
+      console.log(">>>", orderDetail);
+      return "Can please you give me your name, phone number and the address?";
+    },
   }),
+  new DynamicStructuredTool({
+    name: "order-detail",
+    description: `call this if one of these is null or empty string ${JSON.stringify(
+      {
+        orderDetail: orderDetail,
+      }
+    )} or after customer answer the quantity of the item they want to buy`,
+    schema: z.object({
+      item: z.string().describe("The item user want to order"),
+      name: z.string().nullable().describe("The name of the customer"),
+      phone: z.string().nullable().describe("The phone number of the customer"),
+      address: z.string().nullable().describe("The address of the customer"),
+    }),
+    func: async ({ item, name, phone, address }) => {
+      orderDetail.name = name;
+      orderDetail.phone = phone;
+      orderDetail.address = address;
+      if (checkNoNullFieldsOrEmptyStrings(orderDetail)) {
+        console.log(">>>>", orderDetail);
+        return `I have confirm your order :\n${item}, quantity: ${orderDetail.quantity}\naddress: ${name}, ${phone}, ${address}`;
+      } else {
+        console.log(">>>", orderDetail);
+        return `Can you please provide more detail of ${findKeysWithNullValues(
+          orderDetail
+        )}`;
+      }
+    },
+  }),
+  // new DynamicStructuredTool({
+  //   name: "order-detail-confirm",
+  //   description: `call this if customer type in their address and phone in this format "quantity - phone number - address"`,
+  //   schema: z.object({
+  //     quantity: z.number().describe("Quantity of item they want to buy"),
+  //     phone: z.string().describe("Phone number of the customer"),
+  //     address: z.string().describe("Address of the customer"),
+  //   }),
+  //   func: async ({ phone, address }) =>
+  //     `we will deliver to ${address}. Thank you for the order`,
+  // }),
   new DynamicStructuredTool({
     name: "price",
-    description: `call this to get the price of item. input should be asking how much. "bnh" is a vietnamese slang for how much.`,
+    description: `call this to get the price of item. Input should be customer asking how much. "bnh" is a vietnamese slang for how much.`,
     schema: z.object({
       item: z.string().describe("The item user want to know the price"),
     }),
@@ -158,7 +201,7 @@ const MEMORY_KEY = "chat_history";
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
-    `You are a helpful and enthusiastic saleman who must answer using at least one provided tools.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always give answer in Vietnamese`,
+    `You are a helpful and enthusiastic saleman who must answer using at least one provided tools.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always call customers as "anh" for male, "chị" for female and refer yourself as "em". Do not make up any infomation about the customer. Always give answer in Vietnamese`,
   ],
   new MessagesPlaceholder(MEMORY_KEY),
   ["human", "{input}"],
