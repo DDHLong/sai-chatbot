@@ -12,6 +12,12 @@ function App() {
     setInput(e.target.value);
   };
 
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      onSubmit();
+    }
+  };
+
   const onSubmit = async () => {
     if (input.trim() !== "") {
       setInput(""); // Clear the input field after adding the message
@@ -61,6 +67,7 @@ function App() {
           required
           onChange={onChange}
           value={input}
+          onKeyDown={handleKeyPress}
         />
         <button onClick={onSubmit}>Enter</button>
       </div>

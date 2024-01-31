@@ -16,5 +16,5 @@ export function findKeysWithNullValues(obj) {
     }
   }
 
-  return keysWithNullValues.join(", ");
+  return keysWithNullValues;
 }

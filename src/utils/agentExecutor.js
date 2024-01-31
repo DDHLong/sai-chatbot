@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { createOpenAIFunctionsAgent, AgentExecutor } from "langchain/agents";
+import { AgentExecutor } from "langchain/agents";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
@@ -11,7 +11,7 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { formatToOpenAIFunctionMessages } from "langchain/agents/format_scratchpad";
 import { OpenAIFunctionsAgentOutputParser } from "langchain/agents/openai/output_parser";
 import { convertToOpenAIFunction } from "@langchain/core/utils/function_calling";
-import { checkNoNullFieldsOrEmptyStrings } from "./ultils";
+import { checkNoNullFieldsOrEmptyStrings, findKeysWithNullValues } from "./ultils";
 
 const clothingArray = [
   "T-shirt",
@@ -85,7 +85,7 @@ const mockApiCall = (item) => {
 
 const llm = new ChatOpenAI({
   modelName: "gpt-3.5-turbo",
-  temperature: 0,
+  temperature: 1,
   callbacks: [
     {
       handleLLMEnd(output) {
@@ -166,7 +166,7 @@ const tools = [
         console.log(">>>", orderDetail);
         return `Can you please provide more detail of ${findKeysWithNullValues(
           orderDetail
-        )}`;
+        )[0]}`;
       }
     },
   }),
@@ -201,7 +201,7 @@ const MEMORY_KEY = "chat_history";
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
-    `You are a helpful and enthusiastic saleman who must answer using at least one provided tools.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always call customers as "anh" for male, "chị" for female and refer yourself as "em". Do not make up any infomation about the customer. Always give answer in Vietnamese`,
+    `You are a helpful and enthusiastic saleman who capable of persuade customers to buy items.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always call customers as "anh" for male, "chị" for female and refer yourself as "em". Do not make up any infomation about the customer. Always give answer in Vietnamese`,
   ],
   new MessagesPlaceholder(MEMORY_KEY),
   ["human", "{input}"],
