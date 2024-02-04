@@ -11,7 +11,10 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { formatToOpenAIFunctionMessages } from "langchain/agents/format_scratchpad";
 import { OpenAIFunctionsAgentOutputParser } from "langchain/agents/openai/output_parser";
 import { convertToOpenAIFunction } from "@langchain/core/utils/function_calling";
-import { checkNoNullFieldsOrEmptyStrings, findKeysWithNullValues } from "./ultils";
+import {
+  checkNoNullFieldsOrEmptyStrings,
+  findKeysWithNullValues,
+} from "./ultils";
 
 const clothingArray = [
   "T-shirt",
@@ -164,9 +167,9 @@ const tools = [
         return `I have confirm your order :\n${item}, quantity: ${orderDetail.quantity}\naddress: ${name}, ${phone}, ${address}`;
       } else {
         console.log(">>>", orderDetail);
-        return `Can you please provide more detail of ${findKeysWithNullValues(
-          orderDetail
-        )[0]}`;
+        return `Can you please provide more detail of ${
+          findKeysWithNullValues(orderDetail)[0]
+        }`;
       }
     },
   }),
@@ -194,6 +197,30 @@ const tools = [
       });
     },
   }),
+  // new DynamicStructuredTool({
+  //   name: "recommend-product",
+  //   description: `call this if customer want you to recommend a product that suited them`,
+  //   schema: z.object({
+  //     item: z.string().describe("The item user want to order"),
+  //     height: z.number().describe("The height of customer"),
+  //     weight: z.number().describe("The weight of customer"),
+  //   }),
+  //   func: async ({ height, weight }) => {
+  //     if (height === "" && weight === "") {
+  //       return "Can you please provide me your height and weight so I can look for your size";
+  //     } else if (height && weight) {
+  //       const itemMatch = clothingArray.find((i) => i === item);
+  //       if (!itemMatch) {
+  //         return `We don't currently have ${item} in the store.`;
+  //       }
+  //       const itemStatus = await mockApiCallItemStatus(item);
+  //       const detail = JSON.stringify({
+  //         result: itemStatus,
+  //       });
+  //       return `You match size M. Cunrrently, we have ${detail}`;
+  //     }
+  //   },
+  // }),
 ];
 
 const MEMORY_KEY = "chat_history";
@@ -201,7 +228,7 @@ const MEMORY_KEY = "chat_history";
 const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
-    `You are a helpful and enthusiastic saleman who capable of persuade customers to buy items.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to email help@perfin.com. Always call customers as "anh" for male, "chị" for female and refer yourself as "em". Do not make up any infomation about the customer. Always give answer in Vietnamese`,
+    `You are a helpful and enthusiastic saleman who capable of persuade customers to buy items.Don't add anything else to your answer beside given context. If you really can not find answer using provided tools, say "I'm sorry, I don't know the answer to that." And direct the questioner to customer support email help@perfin.com. Always call customers as "anh" for male, "chị" for female and refer yourself as "em". Do not make up any infomation about the customer. Always give answer in Vietnamese.`,
   ],
   new MessagesPlaceholder(MEMORY_KEY),
   ["human", "{input}"],
