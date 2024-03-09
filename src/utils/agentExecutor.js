@@ -88,7 +88,7 @@ const mockApiCall = (item) => {
 
 const llm = new ChatOpenAI({
   modelName: "gpt-3.5-turbo",
-  temperature: 1,
+  temperature: 0.5,
   callbacks: [
     {
       handleLLMEnd(output) {
@@ -101,7 +101,8 @@ const llm = new ChatOpenAI({
 const tools = [
   new DynamicStructuredTool({
     name: "documents-search",
-    description: "Call this when user want a description of an item",
+    description:
+      "Call this when user want a description of an item or information regarding the size",
     schema: z.object({
       question: z.string().describe("input of user"),
     }),
@@ -197,30 +198,6 @@ const tools = [
       });
     },
   }),
-  // new DynamicStructuredTool({
-  //   name: "recommend-product",
-  //   description: `call this if customer want you to recommend a product that suited them`,
-  //   schema: z.object({
-  //     item: z.string().describe("The item user want to order"),
-  //     height: z.number().describe("The height of customer"),
-  //     weight: z.number().describe("The weight of customer"),
-  //   }),
-  //   func: async ({ height, weight }) => {
-  //     if (height === "" && weight === "") {
-  //       return "Can you please provide me your height and weight so I can look for your size";
-  //     } else if (height && weight) {
-  //       const itemMatch = clothingArray.find((i) => i === item);
-  //       if (!itemMatch) {
-  //         return `We don't currently have ${item} in the store.`;
-  //       }
-  //       const itemStatus = await mockApiCallItemStatus(item);
-  //       const detail = JSON.stringify({
-  //         result: itemStatus,
-  //       });
-  //       return `You match size M. Cunrrently, we have ${detail}`;
-  //     }
-  //   },
-  // }),
 ];
 
 const MEMORY_KEY = "chat_history";
