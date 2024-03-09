@@ -8,7 +8,7 @@ import {
   RunnableSequence,
 } from "@langchain/core/runnables";
 
-const llm = new ChatOpenAI();
+const llm = new ChatOpenAI({ openAIApiKey: process.env.OPENAI_API_KEY });
 
 const standaloneQuestionTemplate =
   "Given a question, convert it to a standalone question. question: {question} standalone question:";

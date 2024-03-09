@@ -87,6 +87,7 @@ const mockApiCall = (item) => {
 };
 
 const llm = new ChatOpenAI({
+  openAIApiKey: process.env.OPENAI_API_KEY,
   modelName: "gpt-3.5-turbo",
   temperature: 0.5,
   callbacks: [
@@ -125,15 +126,15 @@ const tools = [
       });
     }, // Outputs still must be strings
   }),
-  new DynamicStructuredTool({
-    name: "order",
-    description: `call this if customer have the intent to buy or order the items. input should be similar to "I want to order X" or "I want to buy X".`,
-    schema: z.object({
-      item: z.string().describe("The item user want to order"),
-    }),
-    func: async ({ item }) =>
-      `I have confirm you want to buy ${item}. How many you want to buy?" `,
-  }),
+  // new DynamicStructuredTool({
+  //   name: "order",
+  //   description: `call this if customer have the intent to buy or order the items. input should be similar to "I want to order X" or "I want to buy X".`,
+  //   schema: z.object({
+  //     item: z.string().describe("The item user want to order"),
+  //   }),
+  //   func: async ({ item }) =>
+  //     `I have confirm you want to buy ${item}. How many you want to buy?" `,
+  // }),
   new DynamicStructuredTool({
     name: "quantity",
     description: `call this if answer the question of how many do the customer want to buy.`,
@@ -152,7 +153,7 @@ const tools = [
       {
         orderDetail: orderDetail,
       }
-    )} or after customer answer the quantity of the item they want to buy`,
+    )}, after customer answer the quantity of the item they want to buy`,
     schema: z.object({
       item: z.string().describe("The item user want to order"),
       name: z.string().nullable().describe("The name of the customer"),
